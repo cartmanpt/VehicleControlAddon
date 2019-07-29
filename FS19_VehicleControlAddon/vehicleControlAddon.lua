@@ -280,7 +280,7 @@ function vehicleControlAddon:onLoad(savegame)
 	vehicleControlAddon.registerState( self, "vcaLimitSpeed",   true )
 	vehicleControlAddon.registerState( self, "vcaLaunchGear",   VCAGlobals.launchGear )
 	vehicleControlAddon.registerState( self, "vcaBOVVolume",    0, vehicleControlAddon.vcaOnSetGearChanged )
-	vehicleControlAddon.registerState( self, "vcaKSIsOn",       true ) --, vehicleControlAddon.vcaOnSetKSIsOn )
+	vehicleControlAddon.registerState( self, "vcaKSIsOn",       false ) --, vehicleControlAddon.vcaOnSetKSIsOn )
 	vehicleControlAddon.registerState( self, "vcaKeepSpeed",    0 )
 	vehicleControlAddon.registerState( self, "vcaKSToggle",     false )
 	vehicleControlAddon.registerState( self, "vcaCCSpeed2",     10 )
@@ -881,7 +881,12 @@ function vehicleControlAddon:onUpdate(dt, isActiveForInput, isActiveForInputIgno
 		vehicleControlAddon.mpDebugPrint( self, "Gear: "..tostring(self.vcaGear)..", range: "..tostring(self.vcaRange))
 		vehicleControlAddon.mpDebugPrint( self, "*********************************************" )
 		
-		self:updateMotorProperties()
+		if self.isServer then
+			local spec = self.spec_motorized
+			if spec.motorizedNode ~= nil and next(spec.differentials) ~= nil then
+				self:updateMotorProperties()
+			end 
+		end 
 	end 
 	
 	
@@ -1337,7 +1342,11 @@ function vehicleControlAddon:onUpdate(dt, isActiveForInput, isActiveForInputIgno
 -- Real RPM 
 	if self.isServer then 
 		self.vcaRpmFactor = 1 
-		if self.vcaTransmission ~= nil and self.vcaTransmission >= 1 and self:getIsMotorStarted() and self.spec_motorized.motor.vcaFakeRpm == nil then 
+		if      self.vcaIsEnteredMP
+				and self.vcaTransmission ~= nil
+				and self.vcaTransmission >= 1
+				and self:getIsMotorStarted()
+				and self.spec_motorized.motor.vcaFakeRpm == nil then 
 			local motor = self.spec_motorized.motor 
 		
 			local m = motor:getMinRpm()
